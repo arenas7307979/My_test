@@ -5,6 +5,8 @@
 #include <opencv2/opencv.hpp>
 using namespace cv;
 
+
+// gaussian-newton
 int main(int argc, char**argv) {
 
 	//initial p
@@ -15,13 +17,18 @@ int main(int argc, char**argv) {
 	cv::Mat Template = imread("part2.png", CV_LOAD_IMAGE_GRAYSCALE);
 
 	//image diff as measurement
-	cv::Mat im1_part = im1.rowRange(115, 315).colRange(115, 315);
+	cv::Mat im1_part = im1.rowRange(115-80, 315-80).colRange(115-80, 315-80);
 
+	float init_x = 115;
+	float init_y = 115;
+	cv::Mat deltaP = cv::Mat::ones(6, 1, CV_32F);
 
-float init_x = 115;
-float init_y = 115;
-	for (int t = 0; t <= 30; t++) {
 #if 1
+	for (int t = 0; t <= 130; t++) {
+		std::cout << "deltaP=" << cv::norm(deltaP) << std::endl;
+		if (cv::norm(deltaP) < 0.01)
+			break;
+
 		cv::Mat error = Template - im1_part;
 
 		//sobel image gradient Ix, Iy
@@ -34,11 +41,11 @@ float init_y = 115;
 		cv::Mat Hessi_ACC = cv::Mat::zeros(6, 6, CV_32F); //初始值为0阵
 		cv::Mat totalDesc = cv::Mat::zeros(6, 1, CV_32F); //初始值为0阵，其维数为（6*1）*1
 		cv: Mat JacobiW;
+
 		for (int i = 0; i < Template.rows; i++) {
 			for (int j = 0; j < Template.cols; j++) {
 				cv::Mat error = cv::Mat::zeros(1, 1, CV_32F);
-				JacobiW =
-						(cv::Mat_<float>(2, 6) << j, 0, i, 0, 1, 0, 0, j, 0, i, 0, 1);
+				JacobiW =(cv::Mat_<float>(2, 6) << j, 0, i, 0, 1, 0, 0, j, 0, i, 0, 1);
 
 				cv::Mat GradientXY =
 						(cv::Mat_<float>(1, 2)
@@ -59,8 +66,8 @@ float init_y = 115;
 		}
 
 		//update dela p
-		cv::Mat deltaP = Hessi_ACC.inv() * totalDesc;
-		std::cout << deltaP << std::endl;
+		deltaP = Hessi_ACC.inv() * totalDesc;
+//                std::cout << deltaP << std::endl;
 		p1 = p1 + deltaP.at<float>(0, 0);
 		p2 = p2 + deltaP.at<float>(0, 1);
 		p3 = p3 + deltaP.at<float>(0, 2);
@@ -74,28 +81,26 @@ float init_y = 115;
 		//cv::Mat warp_dst =  Mat::zeros( im1.rows, im1.cols, im1.type() );//
 		cv::Mat affine_update = (cv::Mat_<float>(2, 3) << 1 + p1, p3, p5, p2, 1
 				+ p4, p6);
-		cv::Mat Point2d = (cv::Mat_<float>(3, 1) << init_x , init_y, 1) ;
+		cv::Mat Point2d = (cv::Mat_<float>(3, 1) << init_x, init_y, 1);
 
 		cv::Mat Point2d_newWarp = affine_update * Point2d;
-		std::cout << "Point2d_newWarp" << Point2d_newWarp <<std::endl;
+//                std::cout << "Point2d_newWarp" << Point2d_newWarp <<std::endl;
 		init_x = Point2d_newWarp.at<float>(0, 0);
 		init_y = Point2d_newWarp.at<float>(0, 1);
 		warpAffine(im1, warp_dst, affine_update, im1.size());
-		cv::Mat im1_part = warp_dst.rowRange(init_x, init_x+200).colRange(init_y, init_y+200);
-
+		im1_part = warp_dst.rowRange(init_x, init_x + 200).colRange(init_y,
+				init_y + 200);
 #endif
 
-		std::cout << "p1=" << p1 << " p2=" << p2 << " p3=" << p3 << " p4=" << p4
-				<< " p5=" << p5 << " p6=" << p6;
-#endif
+//                std::cout << "p1=" << p1 << " p2=" << p2 << " p3=" << p3 << " p4=" << p4
+//                                << " p5=" << p5 << " p6=" << p6 <<std::endl;
 
-//	std::cout << error <<std::endl;
 		cv::imshow("Template", Template);
 		cv::imshow("im1_part", im1_part);
-//	cv::imshow("Template",Template);
-//	cv::imshow("error",error);
-		//cv::imwrite("part2.png", im1_part);
 		cv::waitKey(0);
 	} // iterator 10 times
+#endif
+
+	//cv::imwrite("part2.png", im1_part);
 	return 0;
 }

@@ -96,5 +96,13 @@ g2o_core g2o_stuff
 #target_link_libraries(helloSLAM ${PROJECT_NAME})
 
 #ch Lucas_kanade
-add_executable(helloSLAM src/L_K_opitcal.cpp)
+#add_executable(helloSLAM src/L_K_opitcal.cpp)
+#target_link_libraries(helloSLAM ${PROJECT_NAME})
+
+
+#inverse compostional 
+add_executable(helloSLAM src/L_K_inverse_compositional.cpp)
 target_link_libraries(helloSLAM ${PROJECT_NAME})
+
+
+
